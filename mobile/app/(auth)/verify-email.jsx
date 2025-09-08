@@ -13,54 +13,31 @@ import {
 import { authStyles } from "../../assets/styles/auth.styles";
 import { Image } from "expo-image";
 import { COLORS } from "../../constants/colors";
-
-const VerifyEmail = ({ email, onBack, navigation }) => {
+const VerifyEmail = ({ email, onBack }) => {
   const { isLoaded, signUp, setActive } = useSignUp();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleVerification = async () => {
-  if (!isLoaded) return;
+    if (!isLoaded) return;
 
-  setLoading(true);
-  try {
-    const signUpAttempt = await signUp.attemptEmailAddressVerification({ code });
-
-    if (signUpAttempt.status === "complete") {
-      await setActive({ session: signUpAttempt.createdSessionId });
-      navigation.replace("Home"); // ✅ success
-    } else {
-      Alert.alert("Error", "Verification failed. Please try again.");
-      console.log("Sign-up attempt details:", signUpAttempt);
-    }
-  } catch (err) {
-    // Extract Clerk error safely
-    let errorMessage = "Verification failed";
-
-    if (err?.errors?.[0]?.message) {
-      errorMessage = err.errors[0].message;
-    } else if (err?.message) {
-      errorMessage = err.message;
-    }
-
-    // Show popup to user
-    Alert.alert("Error", errorMessage);
-
-    // Safe log
-    console.log("Verification error (raw):", err);
+    setLoading(true);
     try {
-      console.log(
-        "Verification error (string):",
-        JSON.stringify(err, Object.getOwnPropertyNames(err))
-      );
-    } catch {
-      console.log("Error object could not be stringified");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+      const signUpAttempt = await signUp.attemptEmailAddressVerification({ code });
 
+      if (signUpAttempt.status === "complete") {
+        await setActive({ session: signUpAttempt.createdSessionId });
+      } else {
+        Alert.alert("Error", "Verification failed. Please try again.");
+        console.error(JSON.stringify(signUpAttempt, null, 2));
+      }
+    } catch (err) {
+      Alert.alert("Error", err.errors?.[0]?.message || "Verification failed");
+      console.error(JSON.stringify(err, null, 2));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={authStyles.container}>
@@ -84,9 +61,7 @@ const VerifyEmail = ({ email, onBack, navigation }) => {
 
           {/* Title */}
           <Text style={authStyles.title}>Verify Your Email</Text>
-          <Text style={authStyles.subtitle}>
-            We&apos;ve sent a verification code to {email}
-          </Text>
+          <Text style={authStyles.subtitle}>We&apos;ve sent a verification code to {email}</Text>
 
           <View style={authStyles.formContainer}>
             {/* Verification Code Input */}
@@ -109,9 +84,7 @@ const VerifyEmail = ({ email, onBack, navigation }) => {
               disabled={loading}
               activeOpacity={0.8}
             >
-              <Text style={authStyles.buttonText}>
-                {loading ? "Verifying..." : "Verify Email"}
-              </Text>
+              <Text style={authStyles.buttonText}>{loading ? "Verifying..." : "Verify Email"}</Text>
             </TouchableOpacity>
 
             {/* Back to Sign Up */}
@@ -126,5 +99,4 @@ const VerifyEmail = ({ email, onBack, navigation }) => {
     </View>
   );
 };
-
 export default VerifyEmail;
